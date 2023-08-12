@@ -1,0 +1,87 @@
+from aiogram import Bot, Dispatcher, executor, types
+import string
+import random
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+from random import randrange
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
+from aiogram.dispatcher.filters import Text
+
+
+
+
+
+
+HELP_COMMAND = '''
+<b>/help</b> - <em>список команд</em>
+<b>/now</b> - <em>что вы сейчас хотите?</em>
+<b>/getsticker</b> - <em>получить стикер</em>
+
+'''
+
+bot = Bot(token="6363883120:AAEmZjTdFh_Z8i51ofol2spD9NKXojPscQ0")
+dp = Dispatcher(bot)
+keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+
+# kb_photo = ReplyKeyboardMarkup(resize_keyboard=True)
+
+
+@dp.message_handler(commands=['generate'])
+async def randon_primer(message: types.Message):
+
+    a = random.randint(1, 100)
+    b = random.randint(1, 100)
+    c = a + b
+    print(a, '+', b, '=', c)
+
+    a1 = str(a)
+    b1 = str(b)
+    d = str(c)
+
+    k = a1, '+', b1, '='
+    print(*k)
+
+    e = random.randint(1,100)
+    f = random.randint(1,100)
+    g = random.randint(1,100)
+    print(e)
+    print(f)
+    print(g)
+
+    dict_sample = {1: c, 2: e, 3: f, 4: g}
+
+    mas=[]
+    mas.append(c)
+    mas.append(e)
+    mas.append(f)
+    mas.append(g)
+
+    print(mas)
+
+    random.shuffle(mas)
+
+    print(mas)
+
+    a1 = mas[0]
+    a2 = mas[1]
+    a3 = mas[2]
+    a4 = mas[3]
+
+    print(a1, a2, a3, a4)
+
+    b1 = KeyboardButton(a1)
+    b2 = KeyboardButton(a2)
+    b3 = KeyboardButton(a3)
+    b4 = KeyboardButton(a4)
+
+    keyboard.add(b1).insert(b2).add(b3).insert(b4)
+
+    await bot.send_message(chat_id=message.from_user.id,
+                           text = k,
+                           reply_markup=keyboard
+                           )
+
+    if(message.answer()==c):
+        await bot.send_message(message.from_user.id, 'Ты победил')
+
+if __name__ == '__main__':
+    executor.start_polling(dispatcher=dp, skip_updates=True)
