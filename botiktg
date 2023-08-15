@@ -1,87 +1,70 @@
 from aiogram import Bot, Dispatcher, executor, types
-import string
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 import random
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
-from random import randrange
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
-from aiogram.dispatcher.filters import Text
 
-
-
-
-
-
-HELP_COMMAND = '''
-<b>/help</b> - <em>список команд</em>
-<b>/now</b> - <em>что вы сейчас хотите?</em>
-<b>/getsticker</b> - <em>получить стикер</em>
-
-'''
 
 bot = Bot(token="6363883120:AAEmZjTdFh_Z8i51ofol2spD9NKXojPscQ0")
 dp = Dispatcher(bot)
-keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
 
-# kb_photo = ReplyKeyboardMarkup(resize_keyboard=True)
+bd = {}  # Глобальная база данных (хранит в себе user_id, вопрос и ответ)
 
 
-@dp.message_handler(commands=['generate'])
-async def randon_primer(message: types.Message):
+async def new_randon_primer(message: types.Message):  # Создаёт новый пример, записывает в базу данных, отпрявляет вопрос
 
-    a = random.randint(1, 100)
-    b = random.randint(1, 100)
-    c = a + b
-    print(a, '+', b, '=', c)
+    ################################
+    # Блок создания примера и ответа
+    a = random.randint(1, 10)
+    b = random.randint(1, 10)
+    c = str(a + b)
+    str_qst = f"{a} + {b} = ?"
+    ################################
 
-    a1 = str(a)
-    b1 = str(b)
-    d = str(c)
+    ################################
+    # Запись в бд:
+    # ключ - user_id
+    # значение - массив с вопросом и ответом
+    bd[message.from_user.id] = [str_qst, c]
+    ################################
 
-    k = a1, '+', b1, '='
-    print(*k)
+    ################################
+    # Блок создания массива с ответами
+    mas = []
+    for _ in range(3):
+        time_value = str(random.randint(1, 20))  # Временная переменная с рандомным ответом
+        while time_value in mas:  # Если уже есть такой ответ -> придумываем новый
+            time_value = str(random.randint(1, 20))
+        mas.append(time_value)  # В первые три ячейки кладем рандомные ответы
+    mas.append(c)  # В четвёртой лежит верный ответ
+    random.shuffle(mas)  # Перемешиваем
+    ################################
 
-    e = random.randint(1,100)
-    f = random.randint(1,100)
-    g = random.randint(1,100)
-    print(e)
-    print(f)
-    print(g)
+    ################################
+    # Блок создания клавиатуры
+    btns = [  # Если создавать клаву таким образом, то она будет выглядеть круче (так, как ты сам расположишь кнопки)
+        [KeyboardButton(mas[0]), KeyboardButton(mas[1])],
+        [KeyboardButton(mas[2]), KeyboardButton(mas[3])]
+    ]
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True, keyboard=btns)
+    ################################
 
-    dict_sample = {1: c, 2: e, 3: f, 4: g}
+    ################################
+    # Отправляем вопрос и варианты ответов
+    await message.answer(text=str_qst, reply_markup=keyboard)
+    ################################
 
-    mas=[]
-    mas.append(c)
-    mas.append(e)
-    mas.append(f)
-    mas.append(g)
 
-    print(mas)
+@dp.message_handler()  # Оставляем вход пустым, чтоб бот реагировал на все сообщения
+async def msg(message: types.Message):
+    if message.from_user.id in bd:  # Если пользователь в бд, значит мы уже задавали вопрос и знаем ответ
+        if message.text == bd[message.from_user.id][1]:  # Если сообщение, которое написал пользователь, равно правильному ответу
+            await new_randon_primer(message)  # То мы задаем новые вопрос
+        else:  # Если сообщение, которое написал пользователь, не является верным ответом
+            await message.reply(f"Упс, этот ответ неверный, попробуй заново:\n{bd[message.from_user.id][0]}")  # То мы просим отвить заново
+    else:  # Если пользователя нет в бд, значит он только начал пользоваться ботом -> задаём первый вопрос
+        await new_randon_primer(message)
 
-    random.shuffle(mas)
+    # Как итог, пользователь отвечает буквально 'while True', любое его сообщение будет расценено как верно/неверно
 
-    print(mas)
-
-    a1 = mas[0]
-    a2 = mas[1]
-    a3 = mas[2]
-    a4 = mas[3]
-
-    print(a1, a2, a3, a4)
-
-    b1 = KeyboardButton(a1)
-    b2 = KeyboardButton(a2)
-    b3 = KeyboardButton(a3)
-    b4 = KeyboardButton(a4)
-
-    keyboard.add(b1).insert(b2).add(b3).insert(b4)
-
-    await bot.send_message(chat_id=message.from_user.id,
-                           text = k,
-                           reply_markup=keyboard
-                           )
-
-    if(message.answer()==c):
-        await bot.send_message(message.from_user.id, 'Ты победил')
 
 if __name__ == '__main__':
     executor.start_polling(dispatcher=dp, skip_updates=True)
